@@ -17,6 +17,18 @@ class COOP_DRIVING_API ACoopVehicle : public AWheeledVehiclePawn
 public:
 	ACoopVehicle();
 
+	UFUNCTION(BlueprintCallable, Category = "Vehicle") 
+	void SetThrottle(float Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Vehicle")
+	void SetBrake(float Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Vehicle")
+	void SetSteering(float Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Vehicle")
+	void ChangeGear(int32 Gear);
+
 protected:
 	virtual void BeginPlay() override;
 	
