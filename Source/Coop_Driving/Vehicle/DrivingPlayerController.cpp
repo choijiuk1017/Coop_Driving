@@ -114,7 +114,7 @@ void ADrivingPlayerController::ReleaseThrottle()
 void ADrivingPlayerController::PressBrake()
 {
     ServerSetBrake(1.f);
-    UE_LOG(LogTemp, Warning, TEXT("[INPUT] SPace Pressed"));
+    UE_LOG(LogTemp, Warning, TEXT("[INPUT] S Pressed"));
 }
 
 void ADrivingPlayerController::ReleaseBrake()
@@ -210,12 +210,6 @@ void ADrivingPlayerController::ServerSetThrottle_Implementation(float Value)
 {
     if (ACoopVehicle* Vehicle = GetVehicleOnServer())
     {
-
-        UE_LOG(LogTemp, Warning,
-            TEXT("[SERVER] Throttle: %.2f | Vehicle: %s"),
-            Value,
-            *GetNameSafe(Vehicle));
-
         Vehicle->SetThrottle(FMath::Clamp(Value, 0.f, 1.f));
     }
 }
