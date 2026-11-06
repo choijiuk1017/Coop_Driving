@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Player/PlayerRoleComponent.h"
@@ -9,7 +9,7 @@ UPlayerRoleComponent::UPlayerRoleComponent()
 {
 
 	PrimaryComponentTick.bCanEverTick = false;
-    SetIsReplicatedByDefault(true);             //·¹ÇÃ¸®ÄÉÀÌ¼Ç Âü¿©
+    SetIsReplicatedByDefault(true);             //ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½
 }
 
 
@@ -33,13 +33,13 @@ void UPlayerRoleComponent::AssignRole(EDrivingRole NewRole)
 
     /*
                 
-       [°á¼Õ]  [ID]	 [Á¦ÇÑÇÏ´Â ±â´É]	
-     ½Ã¾ß °á¼Õ	1	Àü¹æÀ» º¼ ¼ö ¾øÀ½	
-     Ã»Ãë °á¼Õ	2	´Ù¸¥ ÇÃ·¹ÀÌ¾îÀÇ ÀÎ°ÔÀÓ º¸ÀÌ½º¸¦ µéÀ» ¼ö ¾øÀ½
-     ¹ßÈ­ °á¼Õ	3	ÀÎ°ÔÀÓ º¸ÀÌ½º·Î ¸»ÇÒ ¼ö ¾øÀ½
+       [ï¿½ï¿½ï¿½]  [ID]	 [ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½]	
+     ï¿½Ã¾ï¿½ ï¿½ï¿½ï¿½	1	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½	
+     Ã»ï¿½ï¿½ ï¿½ï¿½ï¿½	2	ï¿½Ù¸ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½Î°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+     ï¿½ï¿½È­ ï¿½ï¿½ï¿½	3	ï¿½Î°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 
-     °ÔÀÓ ±âÈ¹ÀÌ³ª »óÈ²¿¡ ¸Â°Ô ¿©·¯ °á¼Õ¹øÈ£ AddUniqueÇÏ¸é ‰Î. ´Ü °°Àº ¿ªÇÒ¿¡ °°Àº °á¼Õ¹øÈ£ Ãß°¡´ÂX 
+     ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¹ï¿½Ì³ï¿½ ï¿½ï¿½È²ï¿½ï¿½ ï¿½Â°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Õ¹ï¿½È£ AddUniqueï¿½Ï¸ï¿½ ï¿½ï¿½. ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ò¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Õ¹ï¿½È£ ï¿½ß°ï¿½ï¿½ï¿½X 
     */
     switch (NewRole)
     {
@@ -93,7 +93,7 @@ void UPlayerRoleComponent::OnRep_Assignment()
 }
 
 
-//ÇØ´ç ÇÔ¼ö´Â µð¹ö±ë¿ëÀÓÀ¸·Î ³ªÁß¿¡ »èÁ¦ÇÒ°ÍÀÓ
+//ï¿½Ø´ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ß¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ò°ï¿½ï¿½ï¿½
 void UPlayerRoleComponent::PrintAssignmentDebug() const
 {
     const AActor* Owner = GetOwner();
