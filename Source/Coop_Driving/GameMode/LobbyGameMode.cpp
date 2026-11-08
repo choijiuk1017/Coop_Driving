@@ -4,6 +4,8 @@
 #include "GameMode/LobbyGameMode.h"
 
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
+#include "Online/LANSessionSubsystem.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -35,6 +37,11 @@ bool ALobbyGameMode::StartGameLevel()
 
     bTravelStarted = true;
 
+    if (ULANSessionSubsystem* LAN = GetGameInstance()->GetSubsystem<ULANSessionSubsystem>())
+    {
+        LAN->CloseLobby();
+    }
+
     const FString TravelURL = NextLevelPath + TEXT("?listen");
 
     UE_LOG(LogTemp, Warning, TEXT("[GameMode] ServerTravel: %s"), *TravelURL);
@@ -44,6 +51,10 @@ bool ALobbyGameMode::StartGameLevel()
     if (!bSuccess)
     {
         bTravelStarted = false;
+        if (ULANSessionSubsystem* LAN = GetGameInstance()->GetSubsystem<ULANSessionSubsystem>())
+        {
+            LAN->ReopenLobby();
+        }
     }
 
     return bSuccess;

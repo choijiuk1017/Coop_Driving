@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "Online/LANGameModeBase.h"
 #include "LobbyGameMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class COOP_DRIVING_API ALobbyGameMode : public AGameModeBase
+class COOP_DRIVING_API ALobbyGameMode : public ALANGameModeBase
 {
 	GENERATED_BODY()
 	
@@ -26,7 +26,7 @@ protected:
 	int32 RequiredPlayers = 4;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
-	FString NextLevelPath = TEXT("/Game/Maps/GameMap");
+	FString NextLevelPath = TEXT("/Game/Maps/InGameMapTest");
 
 private:
 	bool bTravelStarted = false;

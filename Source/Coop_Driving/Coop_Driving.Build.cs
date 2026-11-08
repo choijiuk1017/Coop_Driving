@@ -15,10 +15,13 @@ public class Coop_Driving : ModuleRules
             "Engine",
             "InputCore",
             "EnhancedInput",
-            "ChaosVehicles"
+            "ChaosVehicles",
+            "OnlineSubsystem",
+            "OnlineSubsystemUtils"
         });
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+        DynamicallyLoadedModuleNames.Add("OnlineSubsystemNull");
 
         PublicIncludePaths.Add("Coop_Driving");
         // Uncomment if you are using Slate UI

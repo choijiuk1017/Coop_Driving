@@ -21,6 +21,16 @@ class COOP_DRIVING_API AMainPlayerController : public APlayerController
 
 public:
     AMainPlayerController();
+    virtual bool InputKey(const FInputKeyParams& Params) override;
+
+    UFUNCTION(Exec)
+    void LANLeave();
+
+    UFUNCTION(Exec)
+    void LANVoiceStatus();
+
+    virtual void ClientEnableNetworkVoice_Implementation(bool bEnable) override;
+    virtual void ToggleSpeaking(bool bInSpeaking) override;
 
 
 protected:
@@ -46,4 +56,5 @@ protected:
 
     void StartJump();
     void StopJump();
+    void LeaveLANSession();
 };

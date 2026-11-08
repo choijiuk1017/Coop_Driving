@@ -1,14 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "Online/LANGameModeBase.h"
 #include "DrivingGameMode.generated.h"
 
 class APlayerController;
 class AController;
 
 UCLASS()
-class COOP_DRIVING_API ADrivingGameMode : public AGameModeBase
+class COOP_DRIVING_API ADrivingGameMode : public ALANGameModeBase
 {
     GENERATED_BODY()
 

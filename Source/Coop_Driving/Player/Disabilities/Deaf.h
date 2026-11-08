@@ -13,5 +13,9 @@ UCLASS()
 class COOP_DRIVING_API UDeaf : public UDisability
 {
 	GENERATED_BODY()
+public:
+    UDeaf();
+    virtual void ApplyLocal_Implementation(APlayerController* PlayerController) override;
+    virtual void RemoveLocal_Implementation(APlayerController* PlayerController) override;
 	
 };

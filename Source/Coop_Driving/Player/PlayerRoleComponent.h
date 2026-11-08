@@ -1,10 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "PlayerRoleComponent.generated.h"
+
+class UDeaf;
+class UMute;
+class APlayerController;
 
 UENUM(BlueprintType)
 enum class EDrivingRole : uint8
@@ -37,6 +41,8 @@ public:
 	// Sets default values for this component's properties
 	UPlayerRoleComponent();
 	void AssignRole(EDrivingRole NewRole);
+    const FRoleAssignment& GetAssignment() const { return Assignment; }
+    void RefreshLocalVoiceEffects();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -49,9 +55,20 @@ protected:
 		VisibleAnywhere,
 		BlueprintReadOnly,
 		ReplicatedUsing = OnRep_Assignment,
-		Category = "Role")					//»óÅÂ ·¹ÇÃ¸®ÄÉÀÌ¼Ç°ú ÇÒ´ç Äİ¹éÇÔ¼ö µî·Ï
+		Category = "Role")					//ìƒíƒœ ë ˆí”Œë¦¬ì¼€ì´ì…˜ê³¼ í• ë‹¹ ì½œë°±í•¨ìˆ˜ ë“±ë¡
 	FRoleAssignment Assignment;
 
 	UFUNCTION()
 	void OnRep_Assignment();
+
+    UPROPERTY(VisibleAnywhere, Instanced, Category = "Disability")
+    TObjectPtr<UDeaf> DeafEffect;
+
+    UPROPERTY(VisibleAnywhere, Instanced, Category = "Disability")
+    TObjectPtr<UMute> MuteEffect;
+
+private:
+    TWeakObjectPtr<APlayerController> LastVoiceController;
+    TArray<int32> LastVoiceDisabilityIds;
+    bool bVoiceEffectsApplied = false;
 };
