@@ -38,6 +38,9 @@ public:
 	UPlayerRoleComponent();
 	void AssignRole(EDrivingRole NewRole);
 
+    UFUNCTION(BlueprintPure, Category = "Role")
+    EDrivingRole GetRole() const { return Assignment.Role; }
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:

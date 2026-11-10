@@ -16,6 +16,9 @@ class COOP_DRIVING_API ACoopVehicle : public AWheeledVehiclePawn
 
 public:
 	ACoopVehicle();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	int32 GetSelectedGear() const { return SelectedGear; }
+	float GetBrakePressure() const { return BrakePressure; }
 
 	UFUNCTION(BlueprintCallable, Category = "Vehicle") 
 	void SetThrottle(float Value);
@@ -31,5 +34,11 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
+	int32 SelectedGear = 1;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
+	float BrakePressure = 0.f;
 	
 };
