@@ -1,88 +1,78 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Vehicle/DrivingInputRules.h"
+#include "Player/PlayerRoleComponent.h"
 #include "DrivingPlayerController.generated.h"
 
-
-class UInputMappingContext;
-class UInputAction;
 class ACoopVehicle;
-/**
- * 
- */
+
 UCLASS()
 class COOP_DRIVING_API ADrivingPlayerController : public APlayerController
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
     ADrivingPlayerController();
+    virtual void Tick(float DeltaTime) override;
+    virtual void PlayerTick(float DeltaTime) override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    UFUNCTION(BlueprintPure, Category = "Driving")
+    EDrivingRole GetDrivingRole() const;
+
+    void SetSharedVehicle(ACoopVehicle* Vehicle);
+    void ClearDrivingInput();
+    ACoopVehicle* GetSharedVehicle() const { return SharedVehicle; }
+    FString GetDrivingHelp() const;
 
 protected:
     virtual void BeginPlay() override;
-    virtual void SetupInputComponent() override;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
-    TObjectPtr<UInputMappingContext> DrivingMappingContext;
+    UPROPERTY(EditDefaultsOnly, Category = "Driving|Brake", meta = (ClampMin = "0.1"))
+    float BrakeTapWindow = 0.6f;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
-    TObjectPtr<UInputAction> ThrottleAction;
+    UPROPERTY(EditDefaultsOnly, Category = "Driving|Brake", meta = (ClampMin = "0.01", ClampMax = "1"))
+    float BrakeGainPerTap = 0.35f;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
-    TObjectPtr<UInputAction> BrakeAction;
+    UPROPERTY(EditDefaultsOnly, Category = "Driving|Brake", meta = (ClampMin = "0.01"))
+    float BrakeDecayPerSecond = 0.6f;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
-    TObjectPtr<UInputAction> SteerLeftAction;
+    UPROPERTY(EditDefaultsOnly, Category = "Driving|Gear")
+    TArray<EGearArrow> ShiftUpPattern;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
-    TObjectPtr<UInputAction> SteerRightAction;
+    UPROPERTY(EditDefaultsOnly, Category = "Driving|Gear")
+    TArray<EGearArrow> ShiftDownPattern;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
-    TObjectPtr<UInputAction> GearUpAction;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
-    TObjectPtr<UInputAction> GearDownAction;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Vehicle")
-    int32 MaxForwardGear = 8;
+    UPROPERTY(EditDefaultsOnly, Category = "Driving|Gear", meta = (ClampMin = "0.1"))
+    float GearInputTimeout = 2.f;
 
 private:
-    void PressThrottle();
-    void ReleaseThrottle();
+    UPROPERTY(Replicated)
+    TObjectPtr<ACoopVehicle> SharedVehicle;
 
-    void PressBrake();
-    void ReleaseBrake();
+    UPROPERTY(Replicated)
+    TArray<EGearArrow> GearProgress;
 
-    void PressSteerLeft();
-    void ReleaseSteerLeft();
+    UPROPERTY(Replicated)
+    FString GearFeedback;
 
-    void PressSteerRight();
-    void ReleaseSteerRight();
-
-    void UpdateSteering();
-
-    void GearUp();
-    void GearDown();
+    UFUNCTION(Server, Unreliable)
+    void ServerDrivingState(bool bThrottle, float Steering);
 
     UFUNCTION(Server, Reliable)
-    void ServerSetThrottle(float Value);
+    void ServerBrakeTap();
 
     UFUNCTION(Server, Reliable)
-    void ServerSetBrake(float Value);
+    void ServerGearArrow(EGearArrow Arrow);
 
-    UFUNCTION(Server, Reliable)
-    void ServerSetSteering(float Value);
-
-    UFUNCTION(Server, Reliable)
-    void ServerShiftGear(int32 Direction);
-
-    ACoopVehicle* GetVehicleOnServer();
-
-    TWeakObjectPtr<ACoopVehicle> CachedVehicle;
-
-    bool bSteerLeftHeld = false;
-    bool bSteerRightHeld = false;
+    FBrakeTapState BrakeState;
+    FGearPatternState GearState;
+    EDrivingRole AppliedRole = EDrivingRole::None;
+    double LastDrivingPacket = -1.0;
+    float InputSendElapsed = 0.f;
+    bool bPreviousThrottle = false;
+    float PreviousSteering = 0.f;
 };

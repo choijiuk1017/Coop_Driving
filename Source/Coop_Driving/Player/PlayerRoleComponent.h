@@ -44,6 +44,9 @@ public:
     const FRoleAssignment& GetAssignment() const { return Assignment; }
     void RefreshLocalVoiceEffects();
 
+    UFUNCTION(BlueprintPure, Category = "Role")
+    EDrivingRole GetRole() const { return Assignment.Role; }
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
