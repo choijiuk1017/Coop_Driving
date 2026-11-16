@@ -12,7 +12,7 @@ class APlayerController;
 class APlayerState;
 
 // One local user per game instance. Open-mic lobby, then local role restrictions.
-// Restrictions deliberately survive map travel: returning to the lobby does NOT reset them.
+// Role replication restores open mic when a round finishes and players return to the lobby.
 UCLASS(Config=Game)
 class COOP_DRIVING_API UGameplayVoiceSubsystem : public UGameInstanceSubsystem
 {

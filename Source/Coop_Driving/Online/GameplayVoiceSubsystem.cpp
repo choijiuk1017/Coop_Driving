@@ -55,7 +55,7 @@ bool UGameplayVoiceSubsystem::Tick(float DeltaTime)
     }
 
     // Also covers RepNotify arriving before controller/UniqueId initialization.
-    if (bAssigned) Roles->RefreshLocalVoiceEffects();
+    if (Roles) Roles->RefreshLocalVoiceEffects();
 
     if (!Voice.IsValid()) Voice = Online::GetVoiceInterface(World, FName(TEXT("NULL")));
     if (!Voice.IsValid())

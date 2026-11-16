@@ -117,7 +117,7 @@ void UPlayerRoleComponent::OnRep_Assignment()
 
 void UPlayerRoleComponent::RefreshLocalVoiceEffects()
 {
-    if (Assignment.Role == EDrivingRole::None || !GetWorld() || !GetWorld()->GetGameInstance()) return;
+    if (!GetWorld() || !GetWorld()->GetGameInstance()) return;
     APlayerController* PC = GetWorld()->GetGameInstance()->GetFirstLocalPlayerController();
     if (!PC || !PC->IsLocalController() || PC->PlayerState.Get() != GetOwner()) return;
     if (bVoiceEffectsApplied && LastVoiceController.Get() == PC && LastVoiceDisabilityIds == Assignment.DisabilityIds) return;

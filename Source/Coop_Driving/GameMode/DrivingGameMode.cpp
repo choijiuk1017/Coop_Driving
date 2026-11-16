@@ -11,9 +11,16 @@
 #include "GameFramework/Pawn.h"
 #include "EngineUtils.h"
 #include "UObject/ConstructorHelpers.h"
+#include "GameMode/LobbyGameMode.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/PackageName.h"
 
 ADrivingGameMode::ADrivingGameMode()
 {
+    bUseSeamlessTravel = true;
+    ReturnLobbyMap = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/Maps/Untitled.Untitled")));
+    ReturnLobbyGameMode = TSoftClassPtr<ALobbyGameMode>(FSoftObjectPath(
+        TEXT("/Game/Blueprint/BP_LobbyGameMode.BP_LobbyGameMode_C")));
     PlayerControllerClass = ADrivingPlayerController::StaticClass();
     static ConstructorHelpers::FClassFinder<ADrivingPlayerController> DriverBP(TEXT("/Game/Blueprint/BP_DrivingPlayerController"));
     if (DriverBP.Succeeded()) PlayerControllerClass = DriverBP.Class;
@@ -34,6 +41,10 @@ void ADrivingGameMode::InitGame(const FString& MapName, const FString& Options, 
     DefaultPawnClass = APawn::StaticClass(); // Empty player pawns; the shared vehicle stays unpossessed.
     if (!HUDClass || !HUDClass->IsChildOf(ADrivingHUD::StaticClass())) HUDClass = ADrivingHUD::StaticClass();
     Super::InitGame(MapName, Options, ErrorMessage);
+    LobbyMapPath = UGameplayStatics::ParseOption(Options, TEXT("ReturnLobbyMap"));
+    if (LobbyMapPath.IsEmpty()) LobbyMapPath = ReturnLobbyMap.ToSoftObjectPath().GetLongPackageName();
+    LobbyGameModePath = UGameplayStatics::ParseOption(Options, TEXT("ReturnLobbyGameMode"));
+    if (LobbyGameModePath.IsEmpty()) LobbyGameModePath = ReturnLobbyGameMode.ToSoftObjectPath().ToString();
 }
 
 void ADrivingGameMode::EnsureSharedVehicle()
@@ -134,7 +145,7 @@ void ADrivingGameMode::Logout(AController* Exiting)
 
 void ADrivingGameMode::TryAssignRoles()
 {
-    if (!HasAuthority() || bRolesAssigned)
+    if (!HasAuthority() || bRolesAssigned || bReturningToLobby)
     {
         return;
     }
@@ -200,4 +211,39 @@ void ADrivingGameMode::TryAssignRoles()
         Log,
         TEXT("[Role] Assignment ready for %d players; existing roles preserved."),
         RoleComponents.Num());
+}
+
+bool ADrivingGameMode::TryFinishDriving(ACoopVehicle* ArrivingVehicle)
+{
+    if (!HasAuthority() || bReturningToLobby || !bRolesAssigned
+        || !IsValid(ArrivingVehicle) || ArrivingVehicle != SharedVehicle) return false;
+
+    UClass* LobbyClass = TSoftClassPtr<ALobbyGameMode>(FSoftObjectPath(LobbyGameModePath)).LoadSynchronous();
+    if (!FPackageName::DoesPackageExist(LobbyMapPath) || !LobbyClass
+        || !LobbyClass->IsChildOf(ALobbyGameMode::StaticClass()))
+    {
+        UE_LOG(LogTemp, Error, TEXT("[Driving] Cannot finish: invalid lobby map or GameMode: %s / %s"),
+            *LobbyMapPath, *LobbyGameModePath);
+        return false;
+    }
+
+    bReturningToLobby = true;
+    // Absolute travel discards the previous driving ?game= and round options.
+    const FString URL = LobbyMapPath + TEXT("?listen?game=") + LobbyClass->GetPathName();
+    if (!GetWorld()->ServerTravel(URL, true))
+    {
+        bReturningToLobby = false;
+        return false;
+    }
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        if (ADrivingPlayerController* Driver = Cast<ADrivingPlayerController>(PC))
+            Driver->SetSharedVehicle(nullptr);
+        APlayerState* State = PC ? PC->GetPlayerState<APlayerState>() : nullptr;
+        if (UPlayerRoleComponent* Roles = State ? State->FindComponentByClass<UPlayerRoleComponent>() : nullptr)
+            Roles->AssignRole(EDrivingRole::None);
+    }
+    UE_LOG(LogTemp, Log, TEXT("[Driving] Destination reached. Returning to %s"), *LobbyMapPath);
+    return true;
 }

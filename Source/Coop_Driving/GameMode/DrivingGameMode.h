@@ -22,6 +22,18 @@ public:
 
     virtual void Logout(AController* Exiting) override;
 
+    // Called by a destination zone on the server; only the shared vehicle can finish.
+    bool TryFinishDriving(ACoopVehicle* ArrivingVehicle);
+    ACoopVehicle* GetSharedVehicle() const { return SharedVehicle; }
+
+protected:
+    // Fallbacks for launching a driving map directly in the editor.
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
+    TSoftObjectPtr<UWorld> ReturnLobbyMap;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
+    TSoftClassPtr<class ALobbyGameMode> ReturnLobbyGameMode;
+
 private:
     void TryAssignRoles();
     void EnsureSharedVehicle();
@@ -36,6 +48,9 @@ private:
     TArray<TWeakObjectPtr<APlayerController>> ArrivedPlayers;
 
     bool bRolesAssigned = false;
+    bool bReturningToLobby = false;
+    FString LobbyMapPath;
+    FString LobbyGameModePath;
 
     static constexpr int32 RequiredPlayers = 4;
 };
