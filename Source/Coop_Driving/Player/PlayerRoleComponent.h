@@ -10,6 +10,8 @@ class UDeaf;
 class UMute;
 class APlayerController;
 
+DECLARE_MULTICAST_DELEGATE(FOnDrivingAssignmentChanged);
+
 UENUM(BlueprintType)
 enum class EDrivingRole : uint8
 {
@@ -41,6 +43,8 @@ public:
 	// Sets default values for this component's properties
 	UPlayerRoleComponent();
 	void AssignRole(EDrivingRole NewRole);
+    void CopyAssignmentTo(UPlayerRoleComponent* Target) const;
+    FOnDrivingAssignmentChanged OnAssignmentChanged;
     const FRoleAssignment& GetAssignment() const { return Assignment; }
     void RefreshLocalVoiceEffects();
 

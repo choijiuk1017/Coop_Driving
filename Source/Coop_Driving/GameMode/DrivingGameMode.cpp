@@ -3,6 +3,7 @@
 #include "GameFramework/PlayerState.h"
 #include "Player/CoopPlayerState.h"
 #include "Player/PlayerRoleComponent.h"
+#include "Player/DrivingRoleAssignment.h"
 #include "Vehicle/CoopVehicle.h"
 #include "Vehicle/DrivingPlayerController.h"
 #include "Vehicle/DrivingHUD.h"
@@ -175,29 +176,28 @@ void ADrivingGameMode::TryAssignRoles()
         RoleComponents.Add(Component);
     }
 
-    TArray<EDrivingRole> Roles = {
-        EDrivingRole::Briefing,
-        EDrivingRole::Steering,
-        EDrivingRole::Pedals,
-        EDrivingRole::Gear
-    };
-
-    for (int32 Index = Roles.Num() - 1; Index > 0; --Index)
+    TArray<EDrivingRole> ExistingRoles;
+    for (const UPlayerRoleComponent* Component : RoleComponents)
+        ExistingRoles.Add(Component->GetRole());
+    TArray<EDrivingRole> Roles;
+    if (!CompleteDrivingRoleAssignment(ExistingRoles, Roles))
     {
-        const int32 RandomIndex = FMath::RandRange(0, Index);
-        Roles.Swap(Index, RandomIndex);
+        UE_LOG(LogTemp, Error, TEXT("[Role] Duplicate or invalid existing roles; assignment was preserved for diagnosis."));
+        return;
     }
 
     bRolesAssigned = true;
 
     for (int32 Index = 0; Index < RoleComponents.Num(); ++Index)
     {
-        RoleComponents[Index]->AssignRole(Roles[Index]);
+        if (ExistingRoles[Index] == EDrivingRole::None)
+            RoleComponents[Index]->AssignRole(Roles[Index]);
+        ConnectVehicle(ArrivedPlayers[Index].Get());
     }
 
     UE_LOG(
         LogTemp,
         Log,
-        TEXT("[Role] Random assignment completed for %d players."),
+        TEXT("[Role] Assignment ready for %d players; existing roles preserved."),
         RoleComponents.Num());
 }

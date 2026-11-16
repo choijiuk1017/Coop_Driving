@@ -7,7 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "GameMode/LobbyGameMode.h"
-#include "Player/MainPlayerController.h"
+#include "Online/LANPlayerController.h"
 #include "Player/PlayerRoleComponent.h"
 
 void UGameplayVoiceSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -29,7 +29,7 @@ bool UGameplayVoiceSubsystem::Tick(float DeltaTime)
     UWorld* World = GetWorld();
     if (!World || World->GetNetMode() == NM_DedicatedServer) return true;
     APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
-    if (!PC || !PC->IsLocalController() || !PC->IsA<AMainPlayerController>()) return true;
+    if (!PC || !PC->IsLocalController() || !PC->IsA<ALANPlayerController>()) return true;
     APlayerState* PS = PC->PlayerState;
     if (!IsValid(PS) || !PS->GetUniqueId().IsValid()) return true;
 

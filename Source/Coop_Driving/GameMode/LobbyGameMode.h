@@ -6,6 +6,8 @@
 #include "Online/LANGameModeBase.h"
 #include "LobbyGameMode.generated.h"
 
+class ADrivingGameMode;
+
 /**
  * 
  */
@@ -27,6 +29,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
 	FString NextLevelPath = TEXT("/Game/Maps/InGameMapTest");
+
+    // Keep the collaborator's destination map; explicitly carry the driving rules with it.
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
+    TSoftClassPtr<ADrivingGameMode> InGameGameMode;
 
 private:
 	bool bTravelStarted = false;

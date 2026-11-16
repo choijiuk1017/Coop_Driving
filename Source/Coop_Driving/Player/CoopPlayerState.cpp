@@ -11,3 +11,10 @@ ACoopPlayerState::ACoopPlayerState()
         CreateDefaultSubobject<UPlayerRoleComponent>(
             TEXT("PlayerRoleComponent"));
 }
+
+void ACoopPlayerState::CopyProperties(APlayerState* NewPlayerState)
+{
+    Super::CopyProperties(NewPlayerState);
+    if (ACoopPlayerState* Target = Cast<ACoopPlayerState>(NewPlayerState))
+        PlayerRoleComponent->CopyAssignmentTo(Target->PlayerRoleComponent);
+}

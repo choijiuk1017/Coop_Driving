@@ -36,7 +36,49 @@ void ADrivingPlayerController::BeginPlay()
 {
     Super::BeginPlay();
     if (IsLocalController()) SetInputMode(FInputModeGameOnly());
+    RefreshRoleBinding();
     // Read physical key edges below: old IMC assets cannot double-trigger braking or shifts.
+}
+
+void ADrivingPlayerController::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+    RefreshRoleBinding();
+}
+
+void ADrivingPlayerController::RefreshRoleBinding()
+{
+    APlayerState* State = GetPlayerState<APlayerState>();
+    UPlayerRoleComponent* Component = State ? State->FindComponentByClass<UPlayerRoleComponent>() : nullptr;
+    if (BoundRoleComponent.Get() == Component) return;
+    if (BoundRoleComponent.IsValid()) BoundRoleComponent->OnAssignmentChanged.RemoveAll(this);
+    BoundRoleComponent = Component;
+    if (Component)
+        Component->OnAssignmentChanged.AddUObject(this, &ThisClass::HandleRoleAssignmentChanged);
+    HandleRoleAssignmentChanged();
+}
+
+void ADrivingPlayerController::HandleRoleAssignmentChanged()
+{
+    if (HasAuthority())
+    {
+        ClearDrivingInput();
+        AppliedRole = GetDrivingRole();
+    }
+    if (IsLocalController())
+    {
+        InputSendElapsed = 0.1f;
+        if (BoundRoleComponent.IsValid()) BoundRoleComponent->RefreshLocalVoiceEffects();
+    }
+    UE_LOG(LogTemp, Log, TEXT("[Driving][%s] Player=%s Role=%s Vehicle=%s"),
+        HasAuthority() ? TEXT("Server") : TEXT("Client"), *GetNameSafe(PlayerState),
+        *UEnum::GetValueAsString(GetDrivingRole()), *GetNameSafe(SharedVehicle));
+}
+
+void ADrivingPlayerController::OnRep_SharedVehicle()
+{
+    RefreshRoleBinding();
+    if (IsLocalController() && IsValid(SharedVehicle)) SetViewTarget(SharedVehicle);
 }
 
 EDrivingRole ADrivingPlayerController::GetDrivingRole() const
@@ -49,8 +91,12 @@ EDrivingRole ADrivingPlayerController::GetDrivingRole() const
 void ADrivingPlayerController::SetSharedVehicle(ACoopVehicle* Vehicle)
 {
     if (!HasAuthority()) return;
+    RefreshRoleBinding();
+    if (SharedVehicle == Vehicle) return;
     ClearDrivingInput();
     SharedVehicle = Vehicle;
+    OnRep_SharedVehicle();
+    HandleRoleAssignmentChanged();
     ForceNetUpdate();
 }
 
@@ -70,11 +116,13 @@ void ADrivingPlayerController::ClearDrivingInput()
     BrakeState = FBrakeTapState();
     GearState = FGearPatternState();
     GearProgress.Reset();
+    GearFeedback.Reset();
     LastDrivingPacket = -1.0;
 }
 
 void ADrivingPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (BoundRoleComponent.IsValid()) BoundRoleComponent->OnAssignmentChanged.RemoveAll(this);
     ClearDrivingInput();
     Super::EndPlay(EndPlayReason);
 }

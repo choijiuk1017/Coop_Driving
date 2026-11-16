@@ -2,6 +2,7 @@
 
 
 #include "GameMode/LobbyGameMode.h"
+#include "GameMode/DrivingGameMode.h"
 
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
@@ -11,6 +12,8 @@ ALobbyGameMode::ALobbyGameMode()
 {
     // Keep client connections during level travel.
     bUseSeamlessTravel = true;
+    InGameGameMode = TSoftClassPtr<ADrivingGameMode>(FSoftObjectPath(
+        TEXT("/Game/Blueprint/BP_DrivingGameMode.BP_DrivingGameMode_C")));
 }
 
 int32 ALobbyGameMode::GetRequiredPlayers() const
@@ -35,6 +38,13 @@ bool ALobbyGameMode::StartGameLevel()
         return false;
     }
 
+    UClass* DestinationGameMode = InGameGameMode.LoadSynchronous();
+    if (!DestinationGameMode)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[GameMode] Cannot travel: InGameGameMode is not configured or could not be loaded."));
+        return false;
+    }
+
     bTravelStarted = true;
 
     if (ULANSessionSubsystem* LAN = GetGameInstance()->GetSubsystem<ULANSessionSubsystem>())
@@ -42,7 +52,7 @@ bool ALobbyGameMode::StartGameLevel()
         LAN->CloseLobby();
     }
 
-    const FString TravelURL = NextLevelPath + TEXT("?listen");
+    const FString TravelURL = NextLevelPath + TEXT("?listen?game=") + DestinationGameMode->GetPathName();
 
     UE_LOG(LogTemp, Warning, TEXT("[GameMode] ServerTravel: %s"), *TravelURL);
 

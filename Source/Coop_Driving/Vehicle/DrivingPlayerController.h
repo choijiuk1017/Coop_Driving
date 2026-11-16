@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "Online/LANPlayerController.h"
 #include "Vehicle/DrivingInputRules.h"
 #include "Player/PlayerRoleComponent.h"
 #include "DrivingPlayerController.generated.h"
@@ -9,7 +9,7 @@
 class ACoopVehicle;
 
 UCLASS()
-class COOP_DRIVING_API ADrivingPlayerController : public APlayerController
+class COOP_DRIVING_API ADrivingPlayerController : public ALANPlayerController
 {
     GENERATED_BODY()
 
@@ -30,6 +30,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void OnRep_PlayerState() override;
 
     UPROPERTY(EditDefaultsOnly, Category = "Driving|Brake", meta = (ClampMin = "0.1"))
     float BrakeTapWindow = 0.6f;
@@ -50,8 +51,15 @@ protected:
     float GearInputTimeout = 2.f;
 
 private:
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = OnRep_SharedVehicle)
     TObjectPtr<ACoopVehicle> SharedVehicle;
+
+    UFUNCTION()
+    void OnRep_SharedVehicle();
+
+    void RefreshRoleBinding();
+    void HandleRoleAssignmentChanged();
+    TWeakObjectPtr<UPlayerRoleComponent> BoundRoleComponent;
 
     UPROPERTY(Replicated)
     TArray<EGearArrow> GearProgress;

@@ -13,6 +13,7 @@ class COOP_DRIVING_API ACoopPlayerState : public APlayerState
 	GENERATED_BODY()
 public:
 	ACoopPlayerState();
+    virtual void CopyProperties(APlayerState* NewPlayerState) override;
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Role")
 	TObjectPtr<UPlayerRoleComponent> PlayerRoleComponent;

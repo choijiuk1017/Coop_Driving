@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "Online/LANPlayerController.h"
 #include "MainPlayerController.generated.h"
 
 
@@ -15,22 +15,12 @@ struct FInputActionValue;
  * 
  */
 UCLASS()
-class COOP_DRIVING_API AMainPlayerController : public APlayerController
+class COOP_DRIVING_API AMainPlayerController : public ALANPlayerController
 {
 	GENERATED_BODY()
 
 public:
     AMainPlayerController();
-    virtual bool InputKey(const FInputKeyParams& Params) override;
-
-    UFUNCTION(Exec)
-    void LANLeave();
-
-    UFUNCTION(Exec)
-    void LANVoiceStatus();
-
-    virtual void ClientEnableNetworkVoice_Implementation(bool bEnable) override;
-    virtual void ToggleSpeaking(bool bInSpeaking) override;
 
 
 protected:
@@ -56,5 +46,4 @@ protected:
 
     void StartJump();
     void StopJump();
-    void LeaveLANSession();
 };

@@ -81,6 +81,17 @@ void UPlayerRoleComponent::AssignRole(EDrivingRole NewRole)
     Assignment.DisabilityIds = NewDisabilityIds;
     PrintAssignmentDebug();
     RefreshLocalVoiceEffects(); // Listen host does not receive C++ OnRep.
+    Owner->ForceNetUpdate();
+    OnAssignmentChanged.Broadcast();
+}
+
+void UPlayerRoleComponent::CopyAssignmentTo(UPlayerRoleComponent* Target) const
+{
+    if (!IsValid(Target) || !Target->GetOwner() || !Target->GetOwner()->HasAuthority()) return;
+    Target->Assignment = Assignment; // Preserve the collaborator's disability list too.
+    Target->GetOwner()->ForceNetUpdate();
+    Target->RefreshLocalVoiceEffects();
+    Target->OnAssignmentChanged.Broadcast();
 }
 
 void UPlayerRoleComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -93,6 +104,7 @@ void UPlayerRoleComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 void UPlayerRoleComponent::OnRep_Assignment()
 {
     RefreshLocalVoiceEffects();
+    OnAssignmentChanged.Broadcast();
     /*UE_LOG(
         LogTemp,
         Log,
