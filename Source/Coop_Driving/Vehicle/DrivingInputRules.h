@@ -55,18 +55,21 @@ struct FGearPatternState
         return true;
     }
 
-    // 1/-1: completed shift, 0: pending, 2: incorrect input.
+    // 1/-1: shift, 3: reverse/drive toggle, 0: pending, 2: incorrect input.
     int32 Push(EGearArrow Arrow, double Now, float Timeout,
-        const TArray<EGearArrow>& Up, const TArray<EGearArrow>& Down)
+        const TArray<EGearArrow>& Up, const TArray<EGearArrow>& Down,
+        const TArray<EGearArrow>& Reverse = {})
     {
         Expire(Now, Timeout);
         LastInputTime = Now;
         Entered.Add(Arrow);
         const bool bUp = IsPrefix(Entered, Up);
         const bool bDown = IsPrefix(Entered, Down);
+        const bool bReverse = IsPrefix(Entered, Reverse);
         const int32 Result = bUp && Entered.Num() == Up.Num() ? 1
             : bDown && Entered.Num() == Down.Num() ? -1
-            : !bUp && !bDown ? 2 : 0;
+            : bReverse && Entered.Num() == Reverse.Num() ? 3
+            : !bUp && !bDown && !bReverse ? 2 : 0;
         if (Result != 0) Entered.Reset();
         return Result;
     }

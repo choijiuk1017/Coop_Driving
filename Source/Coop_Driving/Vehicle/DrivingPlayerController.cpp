@@ -1,4 +1,4 @@
-﻿#include "Vehicle/DrivingPlayerController.h"
+#include "Vehicle/DrivingPlayerController.h"
 #include "Vehicle/CoopVehicle.h"
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
@@ -28,13 +28,12 @@ ADrivingPlayerController::ADrivingPlayerController()
 {
     bShowMouseCursor = false;
     bAutoManageActiveCameraTarget = false;
-    ShiftUpPattern = { EGearArrow::Up, EGearArrow::Right, EGearArrow::Down, EGearArrow::Up };
-    ShiftDownPattern = { EGearArrow::Down, EGearArrow::Left, EGearArrow::Up, EGearArrow::Down };
 }
 
 void ADrivingPlayerController::BeginPlay()
 {
     Super::BeginPlay();
+    if (HasAuthority()) RandomizeGearPatterns();
     if (IsLocalController()) SetInputMode(FInputModeGameOnly());
     RefreshRoleBinding();
     // Read physical key edges below: old IMC assets cannot double-trigger braking or shifts.
@@ -159,7 +158,8 @@ void ADrivingPlayerController::Tick(float DeltaTime)
         if (GearState.Expire(Now, GearInputTimeout))
         {
             GearProgress.Reset();
-            GearFeedback = TEXT("Timed out - try again");
+            GearFeedback = TEXT("Timed out - new patterns");
+            RandomizeGearPatterns();
         }
     }
 
@@ -186,10 +186,10 @@ void ADrivingPlayerController::PlayerTick(float DeltaTime)
     if (DrivingRole == EDrivingRole::Pedals && WasInputKeyJustPressed(EKeys::SpaceBar)) ServerBrakeTap();
     if (DrivingRole == EDrivingRole::Gear)
     {
-        if (WasInputKeyJustPressed(EKeys::Up)) ServerGearArrow(EGearArrow::Up);
-        if (WasInputKeyJustPressed(EKeys::Down)) ServerGearArrow(EGearArrow::Down);
-        if (WasInputKeyJustPressed(EKeys::Left)) ServerGearArrow(EGearArrow::Left);
-        if (WasInputKeyJustPressed(EKeys::Right)) ServerGearArrow(EGearArrow::Right);
+        if (WasInputKeyJustPressed(EKeys::Up)) ServerGearArrow(EGearArrow::Up, PatternRevision);
+        if (WasInputKeyJustPressed(EKeys::Down)) ServerGearArrow(EGearArrow::Down, PatternRevision);
+        if (WasInputKeyJustPressed(EKeys::Left)) ServerGearArrow(EGearArrow::Left, PatternRevision);
+        if (WasInputKeyJustPressed(EKeys::Right)) ServerGearArrow(EGearArrow::Right, PatternRevision);
     }
 }
 
@@ -220,7 +220,7 @@ void ADrivingPlayerController::ServerBrakeTap_Implementation()
     SharedVehicle->SetBrake(BrakeState.Pressure);
 }
 
-void ADrivingPlayerController::ServerGearArrow_Implementation(EGearArrow Arrow)
+void ADrivingPlayerController::ServerGearArrow_Implementation(EGearArrow Arrow, uint32 ExpectedRevision)
 {
     if (GetDrivingRole() != EDrivingRole::Gear || !IsValid(SharedVehicle)
         || static_cast<uint8>(Arrow) > static_cast<uint8>(EGearArrow::Right)) return;
@@ -229,16 +229,27 @@ void ADrivingPlayerController::ServerGearArrow_Implementation(EGearArrow Arrow)
         ClearDrivingInput();
         AppliedRole = EDrivingRole::Gear;
     }
+    if (ExpectedRevision != PatternRevision) return;
+    if (GearState.Expire(GetWorld()->GetTimeSeconds(), GearInputTimeout))
+    {
+        GearFeedback = TEXT("Timed out - new patterns");
+        RandomizeGearPatterns();
+        return;
+    }
     const int32 Result = GearState.Push(Arrow, GetWorld()->GetTimeSeconds(), GearInputTimeout,
-        ShiftUpPattern, ShiftDownPattern);
+        ShiftUpPattern, ShiftDownPattern, ReversePattern);
     GearProgress = GearState.Entered;
-    if (Result == 1 || Result == -1)
+    if (Result == 1 || Result == -1 || Result == 3)
     {
         const int32 Before = SharedVehicle->GetSelectedGear();
-        SharedVehicle->ChangeGear(Before + Result);
-        GearFeedback = Before == SharedVehicle->GetSelectedGear() ? TEXT("Gear limit reached") : TEXT("Shift complete");
+        const int32 Target = Result == 3 ? (Before < 0 ? 1 : -1) : Before + Result;
+        SharedVehicle->ChangeGear(Target);
+        GearFeedback = Before == SharedVehicle->GetSelectedGear()
+            ? TEXT("Shift blocked: slow down / check gear limit")
+            : SharedVehicle->GetSelectedGear() < 0 ? TEXT("REVERSE (R) - pedals: W to reverse") : TEXT("Shift complete");
     }
-    else GearFeedback = Result == 2 ? TEXT("Wrong input - try again") : TEXT("Entering pattern...");
+    else GearFeedback = Result == 2 ? TEXT("Wrong input - new patterns") : TEXT("Entering pattern...");
+    if (Result != 0) RandomizeGearPatterns();
     ForceNetUpdate();
 }
 
@@ -250,8 +261,8 @@ FString ADrivingPlayerController::GetDrivingHelp() const
     case EDrivingRole::Pedals: return TEXT("PEDALS | Hold W: throttle | Repeated SPACE taps: brake");
     case EDrivingRole::Briefing: return TEXT("BRIEFING | Guide your team. Driving controls are disabled.");
     case EDrivingRole::Gear:
-        return FString::Printf(TEXT("GEAR | UP: %s\nDOWN: %s\nInput: %s\n%s"),
-            *PatternText(ShiftUpPattern), *PatternText(ShiftDownPattern), *PatternText(GearProgress), *GearFeedback);
+        return FString::Printf(TEXT("GEAR | UP: %s\nDOWN: %s\nR / D: %s\nInput: %s\n%s"),
+            *PatternText(ShiftUpPattern), *PatternText(ShiftDownPattern), *PatternText(ReversePattern), *PatternText(GearProgress), *GearFeedback);
     default: return TEXT("Waiting for all 4 players and role assignment...");
     }
 }
@@ -260,6 +271,33 @@ void ADrivingPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADrivingPlayerController, SharedVehicle);
+    DOREPLIFETIME(ADrivingPlayerController, ShiftUpPattern);
+    DOREPLIFETIME(ADrivingPlayerController, ShiftDownPattern);
+    DOREPLIFETIME(ADrivingPlayerController, ReversePattern);
+    DOREPLIFETIME(ADrivingPlayerController, PatternRevision);
     DOREPLIFETIME(ADrivingPlayerController, GearProgress);
     DOREPLIFETIME(ADrivingPlayerController, GearFeedback);
+}
+
+void ADrivingPlayerController::RandomizeGearPatterns()
+{
+    if (!HasAuthority()) return;
+    TArray<EGearArrow> Starts = { EGearArrow::Up, EGearArrow::Down, EGearArrow::Left, EGearArrow::Right };
+    for (int32 Index = Starts.Num() - 1; Index > 0; --Index)
+        Starts.Swap(Index, FMath::RandRange(0, Index));
+    TArray<EGearArrow>* Patterns[] = { &ShiftUpPattern, &ShiftDownPattern, &ReversePattern };
+    for (int32 Index = 0; Index < 3; ++Index)
+    {
+        const TArray<EGearArrow> Previous = *Patterns[Index];
+        TArray<EGearArrow>& Pattern = *Patterns[Index];
+        Pattern = { Starts[Index] };
+        for (int32 Step = 1; Step < 4; ++Step)
+            Pattern.Add(static_cast<EGearArrow>(FMath::RandRange(0, 3)));
+        if (Pattern == Previous)
+            Pattern.Last() = static_cast<EGearArrow>((static_cast<uint8>(Pattern.Last()) + 1) % 4);
+    }
+    GearState = FGearPatternState();
+    GearProgress.Reset();
+    ++PatternRevision;
+    ForceNetUpdate();
 }

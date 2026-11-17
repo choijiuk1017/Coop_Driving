@@ -10,7 +10,7 @@ void ADrivingHUD::DrawHUD()
     const ADrivingPlayerController* PC = Cast<ADrivingPlayerController>(GetOwningPlayerController());
     if (!PC || !Canvas || !GEngine) return;
     const float Scale = FMath::Clamp(Canvas->ClipX / 1000.f, 0.65f, 1.2f);
-    DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.7f), 12.f, 12.f, Canvas->ClipX - 24.f, 155.f * Scale);
+    DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.7f), 12.f, 12.f, Canvas->ClipX - 24.f, 190.f * Scale);
     TArray<FString> Lines;
     PC->GetDrivingHelp().ParseIntoArrayLines(Lines);
     float Y = 24.f;
@@ -21,8 +21,10 @@ void ADrivingHUD::DrawHUD()
     }
     if (const ACoopVehicle* Vehicle = PC->GetSharedVehicle())
     {
-        DrawText(FString::Printf(TEXT("Gear: %d | Brake: %.0f%%"),
-            Vehicle->GetSelectedGear(), Vehicle->GetBrakePressure() * 100.f),
+        const int32 Gear = Vehicle->GetSelectedGear();
+        const FString GearLabel = Gear < 0 ? TEXT("R") : Gear == 0 ? TEXT("N") : FString::FromInt(Gear);
+        DrawText(FString::Printf(TEXT("Gear: %s | Brake: %.0f%%"),
+            *GearLabel, Vehicle->GetBrakePressure() * 100.f),
             FLinearColor::Yellow, 24.f, Y + 6.f, GEngine->GetSmallFont(), Scale);
     }
     else DrawText(TEXT("Waiting for shared vehicle..."), FLinearColor::Yellow, 24.f, Y + 6.f);

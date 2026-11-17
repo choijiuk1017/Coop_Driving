@@ -16,6 +16,13 @@ class COOP_DRIVING_API ACoopVehicle : public AWheeledVehiclePawn
 
 public:
 	ACoopVehicle();
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cargo")
+    TObjectPtr<class UStaticMeshComponent> CargoDeck;
+    UPROPERTY(EditDefaultsOnly, Category="Cargo") bool bSpawnCargo = true;
+    UPROPERTY(EditDefaultsOnly, Category="Cargo", meta=(ClampMin="0", ClampMax="12")) int32 CargoCount = 4;
+    UPROPERTY(EditDefaultsOnly, Category="Cargo") TSubclassOf<class APhysicsCargo> CargoClass;
+    UPROPERTY(EditDefaultsOnly, Category="Cargo|Test") bool bSpawnTestSpeedBump = true;
+    UPROPERTY(EditDefaultsOnly, Category="Cargo|Test", meta=(ClampMin="400")) float TestBumpDistance = 1500.f;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	int32 GetSelectedGear() const { return SelectedGear; }
 	float GetBrakePressure() const { return BrakePressure; }

@@ -41,11 +41,14 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Driving|Brake", meta = (ClampMin = "0.01"))
     float BrakeDecayPerSecond = 0.6f;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Driving|Gear")
+    UPROPERTY(Replicated, VisibleAnywhere, Category = "Driving|Gear")
     TArray<EGearArrow> ShiftUpPattern;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Driving|Gear")
+    UPROPERTY(Replicated, VisibleAnywhere, Category = "Driving|Gear")
     TArray<EGearArrow> ShiftDownPattern;
+
+    UPROPERTY(Replicated, VisibleAnywhere, Category = "Driving|Gear")
+    TArray<EGearArrow> ReversePattern;
 
     UPROPERTY(EditDefaultsOnly, Category = "Driving|Gear", meta = (ClampMin = "0.1"))
     float GearInputTimeout = 2.f;
@@ -74,7 +77,11 @@ private:
     void ServerBrakeTap();
 
     UFUNCTION(Server, Reliable)
-    void ServerGearArrow(EGearArrow Arrow);
+    void ServerGearArrow(EGearArrow Arrow, uint32 ExpectedRevision);
+
+    void RandomizeGearPatterns();
+    UPROPERTY(Replicated)
+    uint32 PatternRevision = 0;
 
     FBrakeTapState BrakeState;
     FGearPatternState GearState;
