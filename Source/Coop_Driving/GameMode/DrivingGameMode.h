@@ -24,9 +24,14 @@ public:
 
     // Called by a destination zone on the server; only the shared vehicle can finish.
     bool TryFinishDriving(ACoopVehicle* ArrivingVehicle);
+    bool TryFailDriving(ACoopVehicle* CaughtVehicle, AActor* Cause);
     ACoopVehicle* GetSharedVehicle() const { return SharedVehicle; }
 
 protected:
+    // Server-side presentation/round-flow hook. Vehicle.IsDrivingDisabled is replicated to every client.
+    UFUNCTION(BlueprintImplementableEvent, Category = "Driving")
+    void OnDrivingFailed(ACoopVehicle* Vehicle, AActor* Cause);
+
     // Fallbacks for launching a driving map directly in the editor.
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
     TSoftObjectPtr<UWorld> ReturnLobbyMap;

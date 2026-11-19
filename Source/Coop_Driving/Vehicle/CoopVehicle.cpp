@@ -84,14 +84,14 @@ void ACoopVehicle::BeginPlay()
 
 void ACoopVehicle::SetThrottle(float Value)
 {
-	if (!HasAuthority()) return;
+	if (!HasAuthority() || bDrivingDisabled) return;
 
 	GetVehicleMovementComponent()->SetThrottleInput(FMath::Clamp(Value, 0.f, 1.f));
 }
 
 void ACoopVehicle::SetBrake(float Value)
 {
-	if (!HasAuthority()) return;
+	if (!HasAuthority() || bDrivingDisabled) return;
 
 	BrakePressure = FMath::Clamp(Value, 0.f, 1.f);
 	GetVehicleMovementComponent()->SetBrakeInput(BrakePressure);
@@ -99,14 +99,14 @@ void ACoopVehicle::SetBrake(float Value)
 
 void ACoopVehicle::SetSteering(float Value)
 {
-	if (!HasAuthority()) return;
+	if (!HasAuthority() || bDrivingDisabled) return;
 
 	GetVehicleMovementComponent()->SetSteeringInput(FMath::Clamp(Value, -1.f, 1.f));
 }
 
 void ACoopVehicle::ChangeGear(int32 Gear)
 {
-	if (!HasAuthority()) return;
+	if (!HasAuthority() || bDrivingDisabled) return;
 
 	UChaosWheeledVehicleMovementComponent* Movement = Cast<UChaosWheeledVehicleMovementComponent>(GetVehicleMovementComponent());
 	if (!Movement) return;
@@ -119,9 +119,25 @@ void ACoopVehicle::ChangeGear(int32 Gear)
 	Movement->SetTargetGear(SelectedGear, true);
 }
 
+void ACoopVehicle::DisableDriving()
+{
+    if (!HasAuthority() || bDrivingDisabled) return;
+    bDrivingDisabled = true;
+    BrakePressure = 1.f;
+    if (UChaosVehicleMovementComponent* Movement = GetVehicleMovementComponent())
+    {
+        Movement->SetThrottleInput(0.f);
+        Movement->SetSteeringInput(0.f);
+        Movement->SetBrakeInput(1.f);
+        Movement->SetHandbrakeInput(true);
+    }
+    ForceNetUpdate();
+}
+
 void ACoopVehicle::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ACoopVehicle, SelectedGear);
     DOREPLIFETIME(ACoopVehicle, BrakePressure);
+    DOREPLIFETIME(ACoopVehicle, bDrivingDisabled);
 }

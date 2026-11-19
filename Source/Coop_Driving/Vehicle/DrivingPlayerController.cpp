@@ -171,6 +171,7 @@ void ADrivingPlayerController::PlayerTick(float DeltaTime)
     const EDrivingRole DrivingRole = GetDrivingRole();
     if (!IsLocalController()) return;
     if (IsValid(SharedVehicle) && GetViewTarget() != SharedVehicle) SetViewTarget(SharedVehicle);
+    if (IsValid(SharedVehicle) && SharedVehicle->IsDrivingDisabled()) return;
 
     const bool bThrottle = DrivingRole == EDrivingRole::Pedals && IsInputKeyDown(EKeys::W);
     const float Steering = DrivingRole == EDrivingRole::Steering
@@ -196,7 +197,7 @@ void ADrivingPlayerController::PlayerTick(float DeltaTime)
 void ADrivingPlayerController::ServerDrivingState_Implementation(bool bThrottle, float Steering)
 {
     const EDrivingRole DrivingRole = GetDrivingRole();
-    if (!IsValid(SharedVehicle)) return;
+    if (!IsValid(SharedVehicle) || SharedVehicle->IsDrivingDisabled()) return;
     if (AppliedRole != DrivingRole)
     {
         ClearDrivingInput();
@@ -210,7 +211,7 @@ void ADrivingPlayerController::ServerDrivingState_Implementation(bool bThrottle,
 
 void ADrivingPlayerController::ServerBrakeTap_Implementation()
 {
-    if (GetDrivingRole() != EDrivingRole::Pedals || !IsValid(SharedVehicle)) return;
+    if (GetDrivingRole() != EDrivingRole::Pedals || !IsValid(SharedVehicle) || SharedVehicle->IsDrivingDisabled()) return;
     if (AppliedRole != EDrivingRole::Pedals)
     {
         ClearDrivingInput();
@@ -223,6 +224,7 @@ void ADrivingPlayerController::ServerBrakeTap_Implementation()
 void ADrivingPlayerController::ServerGearArrow_Implementation(EGearArrow Arrow, uint32 ExpectedRevision)
 {
     if (GetDrivingRole() != EDrivingRole::Gear || !IsValid(SharedVehicle)
+        || SharedVehicle->IsDrivingDisabled()
         || static_cast<uint8>(Arrow) > static_cast<uint8>(EGearArrow::Right)) return;
     if (AppliedRole != EDrivingRole::Gear)
     {
@@ -255,6 +257,8 @@ void ADrivingPlayerController::ServerGearArrow_Implementation(EGearArrow Arrow, 
 
 FString ADrivingPlayerController::GetDrivingHelp() const
 {
+    if (IsValid(SharedVehicle) && SharedVehicle->IsDrivingDisabled())
+        return TEXT("GAME OVER | Vehicle caught. Driving controls are disabled.");
     switch (GetDrivingRole())
     {
     case EDrivingRole::Steering: return TEXT("STEERING | A / D: turn");

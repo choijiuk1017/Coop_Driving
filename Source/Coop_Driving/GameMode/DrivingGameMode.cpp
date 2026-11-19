@@ -213,10 +213,24 @@ void ADrivingGameMode::TryAssignRoles()
         RoleComponents.Num());
 }
 
+bool ADrivingGameMode::TryFailDriving(ACoopVehicle* CaughtVehicle, AActor* Cause)
+{
+    if (!HasAuthority() || bReturningToLobby || !IsValid(CaughtVehicle)
+        || CaughtVehicle != SharedVehicle || CaughtVehicle->IsDrivingDisabled()) return false;
+    CaughtVehicle->DisableDriving();
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        if (ADrivingPlayerController* Driver = Cast<ADrivingPlayerController>(It->Get()))
+            Driver->ClearDrivingInput();
+    }
+    OnDrivingFailed(CaughtVehicle, Cause);
+    return true;
+}
+
 bool ADrivingGameMode::TryFinishDriving(ACoopVehicle* ArrivingVehicle)
 {
     if (!HasAuthority() || bReturningToLobby || !bRolesAssigned
-        || !IsValid(ArrivingVehicle) || ArrivingVehicle != SharedVehicle) return false;
+        || !IsValid(ArrivingVehicle) || ArrivingVehicle != SharedVehicle || ArrivingVehicle->IsDrivingDisabled()) return false;
 
     UClass* LobbyClass = TSoftClassPtr<ALobbyGameMode>(FSoftObjectPath(LobbyGameModePath)).LoadSynchronous();
     if (!FPackageName::DoesPackageExist(LobbyMapPath) || !LobbyClass
