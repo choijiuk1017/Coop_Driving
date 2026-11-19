@@ -202,7 +202,6 @@ bool FPoliceRoundFailureTest::RunTest(const FString& Parameters)
     ACoopVehicle* Vehicle = World->SpawnActor<ACoopVehicle>();
     if (!TestNotNull(TEXT("Shared vehicle"), Vehicle)) return false;
     Vehicle->bSpawnCargo = false;
-    Vehicle->bSpawnTestSpeedBump = false;
     World->InitializeActorsForPlay(FURL());
     World->BeginPlay();
     ADrivingGameMode* Mode = World->GetAuthGameMode<ADrivingGameMode>();
@@ -258,7 +257,6 @@ bool FPlacedGimmicksTest::RunTest(const FString& Parameters)
             || !TestNotNull(TEXT("Placed police"), Police) || !TestNotNull(TEXT("Placed traffic light"), Light)
             || !TestNotNull(TEXT("Placed speed bump"), Bump) || !TestNotNull(TEXT("Copied deer"), FastPassDeer)) return false;
         Vehicle->bSpawnCargo = false;
-        Vehicle->bSpawnTestSpeedBump = false;
         World->InitializeActorsForPlay(FURL());
         if (bUseDrivingMode) World->BeginPlay();
         else World->GetWorldSettings()->NotifyBeginPlay();

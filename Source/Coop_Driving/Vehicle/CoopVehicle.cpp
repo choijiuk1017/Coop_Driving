@@ -8,7 +8,6 @@
 #include "Net/UnrealNetwork.h"
 #include "Components/StaticMeshComponent.h"
 #include "Vehicle/PhysicsCargo.h"
-#include "Vehicle/CargoSpeedBump.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/World.h"
 
@@ -66,18 +65,6 @@ void ACoopVehicle::BeginPlay()
             APhysicsCargo* Cargo = GetWorld()->SpawnActor<APhysicsCargo>(CargoClass, Location, CargoDeck->GetComponentRotation(), Params);
             if (Cargo) Cargo->Body->SetPhysicsLinearVelocity(GetVelocity());
             else UE_LOG(LogTemp, Warning, TEXT("[Cargo] Box %d blocked. Adjust CargoDeck position in the vehicle BP."), Index);
-        }
-    }
-    if (bSpawnTestSpeedBump)
-    {
-        const FVector Ahead = GetActorLocation() + GetActorForwardVector() * TestBumpDistance;
-        FHitResult Ground;
-        FCollisionQueryParams Query(SCENE_QUERY_STAT(CargoBumpGround), false, this);
-        if (GetWorld()->LineTraceSingleByObjectType(Ground, Ahead + FVector(0,0,500), Ahead - FVector(0,0,2000),
-            FCollisionObjectQueryParams(ECC_WorldStatic), Query))
-        {
-            GetWorld()->SpawnActor<ACargoSpeedBump>(Ground.ImpactPoint,
-                FRotator(0.f, GetActorRotation().Yaw, 0.f));
         }
     }
 }
